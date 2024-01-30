@@ -1,40 +1,20 @@
-# HD44780 LCD with PCF8574 I2c
+# emonPiLCD
 
-I2C Address: 0x27 or 0x3f
+The service handles display output and button press input on the emonPi v1 and emonPi v2. Code moved from the emonpi repository.
 
+There are two sub-scripts `emonPiLCD1.py` that works with the original emonPi v1 (HD44780 LCD with PCF8574 I2c, I2C address 0x27 or 0x3f) and `emonPiLCD2.py` that works with the newer emonPi2 ssd1306 based OLED display.
 
-# Enabling The I2C Port
+Script `emonPiLCD.py` detects which emonPi version is connected by checking the I2C address returned.
 
-**Tested on Raspbian**
+## Install
 
-The I2C ports need to be enabled in Raspbian before they can be used.
+- Use `sudo raspi-config` to enable I2C (enabled on emonSD as standard).
+- Make sure that one wire temperature sensing is **not** enabled on GPIO 4 with the emonPi2 as this is used for the push button.
+- Run the installation script:
 
-	$ sudo nano /boot/config.txt
+    ./install.sh
 
-Un-comment / add the line
-
-	dtparam=i2c_arm=on
-
-Edit kernel modules file:
-
-	$ sudo nano /etc/modules
-
-Add this line:
-
-i2c-dev
-
-Exit and save the file.
-
-## Install the I2C utilities:
-
-Usually pre-installed
-
-		$ sudo apt-get install python-smbus i2c-tools
-
-Enter "sudo reboot" to restart the pi and now the I2C pins will be available to use.
-
-
-## Detect LCD on I2C bus and find out address
+## Manual detection of LCD on I2C bus and find out address
 
 	$ sudo i2cdetect -y 1
 
@@ -53,19 +33,3 @@ pi@emonpi:~ $  sudo i2cdetect -y 1
 70: -- -- -- -- -- -- -- --   
 ```
 
-Use port 0 for very old 256Mb RAM pi (rev1) - not recommended to use this pi version
-
-# Install emonPiLCD python script
-
-```
-sudo apt-get update
-sudo apt-get install python3-smbus i2c-tools python3-rpi.gpio python3-pip redis-server python3-gpiozero -y
-sudo pip3 install redis paho-mqtt xmltodict requests
-```
-
-## Run as service
-
-Run the shell script  
-```
-./install.sh
-```
