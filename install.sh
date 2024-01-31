@@ -13,8 +13,13 @@ sudo apt-get install -y python3-smbus i2c-tools python3-rpi.gpio python3-gpiozer
 sudo apt-get install -y libopenjp2-7
 pip3 install redis paho-mqtt xmltodict requests adafruit-circuitpython-ssd1306 Pillow
 
+boot_config=/boot/config.txt
+if [ -f /boot/firmware/config.txt ]; then
+    boot_config=/boot/firmware/config.txt
+fi
+
 # Uncomment dtparam=i2c_arm=on
-sudo sed -i "s/^#dtparam=i2c_arm=on/dtparam=i2c_arm=on/" /boot/config.txt
+sudo sed -i "s/^#dtparam=i2c_arm=on/dtparam=i2c_arm=on/" $boot_config
 # Append line i2c-dev to /etc/modules
 sudo sed -i -n '/i2c-dev/!p;$a i2c-dev' /etc/modules
 
