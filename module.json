@@ -1,0 +1,7 @@
+{
+    "name"         : "emonPiLCD",
+    "version"      : "2.0.0",
+    "location"     : "/opt/openenergymonitor",
+    "branches_available": ["stable","master"],
+    "requires": []
+}
