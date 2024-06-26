@@ -16,6 +16,7 @@ import configparser
 import itertools
 import threading
 import math
+import json
 
 import redis
 import paho.mqtt.client as mqtt
@@ -96,6 +97,7 @@ page = default_page
 
 # Define pages in array
 pages = [
+    "emonHP Data",
     "Ethernet",
     "WiFi",
     "WiFi AP",
@@ -235,6 +237,7 @@ def updateLCD():
     with lock:
         global page, pages
         global screensaver
+        global r
 
     # Create object for getting IP addresses of interfaces
     ipaddress = IPAddress()
@@ -242,6 +245,18 @@ def updateLCD():
     if screensaver==True:
         drawClear();
         return
+
+    # Load emoncms inputs from redis
+    inputs = {}
+    inputids = r.smembers('user:inputs:1')
+    for input in inputids:
+        input_obj = r.hgetall('input:' + input)
+        input_last_timevalue = r.hgetall('input:lastvalue:' + input)
+        # by nodeid and name
+        if input_obj['nodeid'] not in inputs:
+            inputs[input_obj['nodeid']] = {}
+        inputs[input_obj['nodeid']][input_obj['name']] = input_last_timevalue
+    
 
     if page == pages.index("System Info"):
         drawText(0,0,sd_image_version)
@@ -256,6 +271,37 @@ def updateLCD():
 
         drawText(0,0,datetime.now().strftime('%b %d %H:%M'))
         drawText(0,14,'Uptime %.2f days' % (seconds / 86400),True)
+        return
+
+    # Display emonTx4 data
+    if page == pages.index("emonHP Data"):
+        nodeid = 'heatpump'
+        name = 'electric_Power'
+        if nodeid in inputs:
+            if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
+                updated_ago = time.time() - float(inputs[nodeid][name]['time'])
+                value = float(inputs[nodeid][name]['value'])
+                if updated_ago < 30:
+                    # ELEC 0W (10s ago)
+                    drawText(0,0,'ELEC: %.0fW (%ds ago)' % (value, updated_ago))
+                else:
+                    drawText(0,0,'ELEC: ERROR')
+            else:
+                drawText(0,0,'ELEC: ERROR')
+
+        nodeid = 'heatpump'
+        name = 'heatmeter_Power'
+        if nodeid in inputs:
+            if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
+                updated_ago = time.time() - float(inputs[nodeid][name]['time'])
+                value = float(inputs[nodeid][name]['value'])
+                if updated_ago < 30:
+                    # Heat 0W (10s ago)
+                    drawText(0,14,'HEAT: %.0fW (%ds ago)' % (value, updated_ago),True)
+                else:
+                    drawText(0,14,'HEAT: ERROR',True)
+            else:
+                drawText(0,14,'HEAT: ERROR',True)
         return
 
     # Now display the appropriate LCD page
@@ -566,7 +612,7 @@ def main():
         
         last_btn_state = btn_state
         btn_state = push_btn.is_pressed
-        
+
         if btn_state != last_btn_state:
                 
             if btn_state and not last_btn_state:
@@ -599,7 +645,7 @@ def main():
             screensaver = True
 
         #Update LCD in case it is left at a screen where values can change (e.g uptime etc)
-        if (now-lcd_update_time)>=10.0:
+        if (now-lcd_update_time)>=1.0:
             lcd_update_time = now
             updateLCD()
             
