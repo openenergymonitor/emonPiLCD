@@ -92,8 +92,20 @@ lcd_i2c = ['3c']
 # ------------------------------------------------------------------------------------
 
 # Default Startup Page
-max_number_pages = 8
 page = default_page
+
+# Define pages in array
+pages = [
+    "Ethernet",
+    "WiFi",
+    "WiFi AP",
+    "WiFi AP Toggle",
+    "SSH",
+    "Shutdown",
+    "System Info",
+    "Uptime"
+]
+
 screensaver = False
 
 sd_image_version = ''
@@ -150,11 +162,11 @@ def drawText(x,y,msg,update=False):
 
 
 def buttonPressLong():
-    global page
+    global page, pages
     
     logger.info("Mode button LONG press")
 
-    if page == 7:
+    if page == pages.index("SSH"):
         ret = subprocess.call(ssh_status, shell=True)
         if ret > 0:
             drawText(0,0,'Enabling SSH',True)
@@ -173,11 +185,11 @@ def buttonPressLong():
             drawText(0,0,'SSH Disabled')
             drawText(0,14,'',True)
 
-    elif page == 8:
+    elif page == pages.index("Shutdown"):
         logger.info("Shutting down")
         shutdown()
         
-    elif page == 5:
+    elif page == pages.index("WiFi AP Toggle"):
         ret = subprocess.call(wifiAP_status, shell=True)       
         if ret == 0:
             logger.info("Stopping WiFi AP")
@@ -186,7 +198,7 @@ def buttonPressLong():
             time.sleep(1)
             drawText(0,0,'WiFi AP Stopped',True)
             time.sleep(1)
-            page = 4
+            page = pages.index("WiFi AP")
             updateLCD()
         else:
             logger.info("Starting WiFi AP")
@@ -195,11 +207,11 @@ def buttonPressLong():
             time.sleep(3)
             drawText(0,0,'WiFi AP Started',True)
             time.sleep(1)
-            page = 4
+            page = pages.index("WiFi AP")
             updateLCD()
 
 def buttonPress():
-    global page
+    global page, pages
     global screensaver
     global buttonPress_time
     
@@ -207,7 +219,7 @@ def buttonPress():
         screensaver = False
     else:
         page += 1
-        if page > max_number_pages:
+        if page > len(pages)-1:
             page = 0
 
     now = time.time()
@@ -221,7 +233,7 @@ def buttonPress():
 def updateLCD():
     # Lock thread to avoid LCD being corrupted if a button press interrupt interrupts the LCD update
     with lock:
-        global page
+        global page, pages
         global screensaver
 
     # Create object for getting IP addresses of interfaces
@@ -231,11 +243,12 @@ def updateLCD():
         drawClear();
         return
 
-    if page == 0:
+    if page == pages.index("System Info"):
         drawText(0,0,sd_image_version)
         drawText(0,14,"Serial: " + serial_num,True)
+        return
 
-    if page == 1:
+    if page == pages.index("Uptime"):
     # Get uptime
         with open('/proc/uptime', 'r') as f:
             seconds = float(f.readline().split()[0])
@@ -243,9 +256,10 @@ def updateLCD():
 
         drawText(0,0,datetime.now().strftime('%b %d %H:%M'))
         drawText(0,14,'Uptime %.2f days' % (seconds / 86400),True)
+        return
 
     # Now display the appropriate LCD page
-    if page == 2:
+    if page == pages.index("Ethernet"):
     # Update ethernet
         eth0ip = ipaddress.get_ip_address('eth0')
         r.set("eth:active", int(bool(eth0ip)))
@@ -262,8 +276,9 @@ def updateLCD():
         else:
             drawText(0,0,"Ethernet:")
             drawText(0,14,"NOT CONNECTED",True)
+        return
 
-    if page == 3:
+    if page == pages.index("WiFi"):
     # Update wifi
         wlan0ip = ipaddress.get_ip_address('wlan0')
         
@@ -294,8 +309,9 @@ def updateLCD():
             drawText(0,14,"NOT CONNECTED",True)
         oled.image(image)
         oled.show()
+        return
 
-    if page == 4:
+    if page == pages.index("WiFi AP"):
         ap0ip = ipaddress.get_ip_address('ap0')
         
         r.set("ap0:active", int(bool(ap0ip)))
@@ -309,8 +325,10 @@ def updateLCD():
             drawText(0,14,"DISABLED",True)
         oled.image(image)
         oled.show()
+        return
 
-    if page == 5:
+
+    if page == pages.index("WiFi AP Toggle"):
         ret = subprocess.call(wifiAP_status, shell=True)       
         if ret == 0:
             drawText(0,0,"Disable WiFi AP?")
@@ -318,27 +336,9 @@ def updateLCD():
             drawText(0,0,"Enable WiFi AP?")
             
         drawText(0,14,"Y press & hold",True)
+        return
 
-    if page == 6:
-    # Update Hi-Link 3G Dongle - connects on eth1
-        if ipaddress.get_ip_address("eth1") and gsmhuaweistatus.is_hilink(hilink_device_ip):
-            gsm_connection_status = gsmhuaweistatus.return_gsm_connection_status(hilink_device_ip)
-            r.set("gsm:connection", gsm_connection_status[0])
-            r.set("gsm:signal", gsm_connection_status[1])
-            r.set("gsm:active", 1)
-        else:
-            r.set("gsm:active", 0)
-
-        if eval(r.get("gsm:active")):
-            drawText(0,0,r.get("gsm:connection"))
-            drawText(0,14,r.get("gsm:signal"),True)
-        elif eval(r.get("eth:active")) or eval(r.get("wlan:active")):
-            page += 1
-        else:
-            drawText(0,0,"GSM:")
-            drawText(0,14,"NO DEVICE",True)
-
-    if page == 7:
+    if page == pages.index("SSH"):
         ret = subprocess.call(ssh_status, shell=True)
         if ret > 0:
             #ssh not running
@@ -348,10 +348,12 @@ def updateLCD():
             drawText(0,0,"SSH Disable?")
 
         drawText(0,14,"Y press & hold",True)
+        return
 
-    if page == 8:
+    if page == pages.index("Shutdown"):
         drawText(0,0,"Shutdown?")
         drawText(0,14,"Y press & hold",True)
+        return
 
 
 class IPAddress:
@@ -583,7 +585,7 @@ def main():
                     
         if btn_state:
             press_time = math.floor(now - btn_press_timer)
-            if page==5 or page == 7 or page == 8:
+            if page == pages.index("WiFi AP Toggle") or page == pages.index("SSH") or page == pages.index("Shutdown"):
                 if press_time>=1.0 and press_time<=5.0:
                     draw.rectangle((108, 15, 120, 25), outline=0, fill=0)
                     draw.text((110,14), str(press_time), font=font, fill=255)
@@ -593,7 +595,7 @@ def main():
                         buttonPressLong()
                 
         
-        if (now-buttonPress_time)>=59:
+        if (now-buttonPress_time)>=300:
             screensaver = True
 
         #Update LCD in case it is left at a screen where values can change (e.g uptime etc)
