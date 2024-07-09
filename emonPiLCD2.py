@@ -508,6 +508,7 @@ def main():
         
     except Exception:
         logger.error("Failed to attach LCD push button interrupt...")
+        push_btn = None
 
     logger.info("Connecting to redis server...")
     # We wait here until redis has successfully started up
@@ -563,7 +564,8 @@ def main():
         now = time.time()
         
         last_btn_state = btn_state
-        btn_state = push_btn.is_pressed
+        if push_btn is not None:
+            btn_state = push_btn.is_pressed
         
         if btn_state != last_btn_state:
                 

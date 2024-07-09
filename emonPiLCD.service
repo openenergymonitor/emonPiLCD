@@ -11,6 +11,7 @@ After=mosquitto.service
 
 [Service]
 User=pi
+WorkingDirectory=~
 PIDFile=/var/run/emonpilcd.pid
 Environment='LOG_PATH=/var/log/emonpilcd'
 ExecStart=/usr/bin/python3 /opt/openenergymonitor/emonPiLCD/emonPiLCD.py --logfile=${LOG_PATH}/emonpilcd.log
