@@ -288,6 +288,8 @@ def updateLCD():
                     drawText(0,0,'ELEC: ERROR')
             else:
                 drawText(0,0,'ELEC: ERROR')
+        else:
+            drawText(0,0,'ELEC: ERROR')
 
         nodeid = 'heatpump'
         name = 'heatmeter_Power'
@@ -302,6 +304,8 @@ def updateLCD():
                     drawText(0,14,'HEAT: ERROR',True)
             else:
                 drawText(0,14,'HEAT: ERROR',True)
+        else:
+            drawText(0,14,'HEAT: ERROR',True)
         return
 
     # Now display the appropriate LCD page
@@ -655,3 +659,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
