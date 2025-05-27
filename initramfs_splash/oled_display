@@ -1,0 +1,15 @@
+#!/bin/sh
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+
+case "$1" in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+echo "Including OLED boot binary in initramfs..."
+
+# Copy the binary into initramfs
+copy_exec /usr/local/bin/oled_boot /usr/local/bin/oled_boot
