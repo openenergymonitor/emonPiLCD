@@ -1,0 +1,14 @@
+#!/bin/sh
+PREREQ=""
+
+prereqs() { echo "$PREREQ"; }
+case "$1" in
+  prereqs) prereqs; exit 0 ;;
+esac
+
+modprobe i2c-bcm2835
+modprobe i2c-dev
+
+sleep 0.5
+lsmod > /run/oled.lsmod.txt
+/usr/local/bin/oled_boot >> /run/oled.log 2>&1
