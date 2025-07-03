@@ -54,7 +54,7 @@ mqtt_topics = {config.get('mqtt', 'mqtt_emonpi_topic'): 'basedata',
 # ------------------------------------------------------------------------------------
 redis_host = config.get('redis', 'redis_host')
 redis_port = config.get('redis', 'redis_port')
-r = redis.Redis(host=redis_host, port=redis_port, db=0, charset="utf-8", decode_responses=True)
+r = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
 # ------------------------------------------------------------------------------------
 # General Settings
