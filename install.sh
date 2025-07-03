@@ -9,7 +9,7 @@ usrdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # sudo apt update
 
-sudo apt-get install -y python3-smbus i2c-tools python3-rpi.gpio python3-gpiozero
+sudo apt-get install -y python3-smbus i2c-tools python3-rpi-lgpio python3-gpiozero
 sudo apt-get install -y libopenjp2-7
 pip3 install redis paho-mqtt xmltodict requests adafruit-circuitpython-ssd1306 Pillow
 
