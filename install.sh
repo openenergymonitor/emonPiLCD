@@ -9,7 +9,16 @@ usrdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # sudo apt update
 
-sudo apt-get install -y python3-smbus i2c-tools python3-rpi-lgpio python3-gpiozero
+# Check if python3-rpi-lgpio package is available
+if apt-cache show python3-rpi-lgpio > /dev/null 2>&1; then
+    echo "- installing python3-rpi-lgpio"
+    sudo apt-get install -y python3-rpi-lgpio
+else
+    echo "- installing python3-rpi.gpio"
+    sudo apt-get install -y python3-rpi.gpio
+fi
+
+sudo apt-get install -y python3-smbus i2c-tools python3-gpiozero
 sudo apt-get install -y libopenjp2-7
 pip3 install redis paho-mqtt xmltodict requests adafruit-circuitpython-ssd1306 Pillow
 
