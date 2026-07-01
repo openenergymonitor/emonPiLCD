@@ -98,6 +98,7 @@ page = default_page
 # Define pages in array
 pages = [
     "emonHP Data",
+    "BoilerGrid Data",
     "Ethernet",
     "WiFi",
     "WiFi AP",
@@ -273,7 +274,7 @@ def updateLCD():
         drawText(0,14,'Uptime %.2f days' % (seconds / 86400),True)
         return
 
-    # Display emonTx4 data
+    # Display Heatpump data
     if page == pages.index("emonHP Data"):
         nodeid = 'heatpump'
         name = 'electric_Power'
@@ -283,15 +284,15 @@ def updateLCD():
                 value = float(inputs[nodeid][name]['value'])
                 if updated_ago < 30:
                     # ELEC 0W (10s ago)
-                    drawText(0,0,'ELEC: %.0fW (%ds ago)' % (value, updated_ago))
+                    drawText(0,0,'ELEC HP: %.0fW (%ds)' % (value, updated_ago))
                 else:
-                    drawText(0,0,'ELEC: ERROR')
+                    drawText(0,0,'ELEC HP: ERROR')
             else:
-                drawText(0,0,'ELEC: ERROR')
+                drawText(0,0,'ELEC HP: ERROR')
         else:
-            drawText(0,0,'ELEC: ERROR')
+            drawText(0,0,'ELEC HP: ERROR')
 
-        nodeid = 'heatpump'
+        nodeid = 'heatmeters'
         name = 'heatmeter_Power'
         if nodeid in inputs:
             if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
@@ -299,13 +300,48 @@ def updateLCD():
                 value = float(inputs[nodeid][name]['value'])
                 if updated_ago < 30:
                     # Heat 0W (10s ago)
-                    drawText(0,14,'HEAT: %.0fW (%ds ago)' % (value, updated_ago),True)
+                    drawText(0,14,'HEAT HP: %.0fW (%ds)' % (value, updated_ago),True)
                 else:
-                    drawText(0,14,'HEAT: ERROR',True)
+                    drawText(0,14,'HEAT HP: ERROR',True)
             else:
-                drawText(0,14,'HEAT: ERROR',True)
+                drawText(0,14,'HEAT HP: ERROR',True)
         else:
-            drawText(0,14,'HEAT: ERROR',True)
+            drawText(0,14,'HEAT HP: ERROR',True)
+        return
+
+    # Display Boiler + Grid data
+    if page == pages.index("BoilerGrid Data"):
+        nodeid = 'grid'
+        name = 'electric_Power'
+        if nodeid in inputs:
+            if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
+                updated_ago = time.time() - float(inputs[nodeid][name]['time'])
+                value = float(inputs[nodeid][name]['value'])
+                if updated_ago < 30:
+                    # ELEC 0W (10s ago)
+                    drawText(0,0,'GRID: %.0fW (%ds)' % (value, updated_ago))
+                else:
+                    drawText(0,0,'GRID: ERROR')
+            else:
+                drawText(0,0,'GRID: ERROR')
+        else:
+            drawText(0,0,'GRID: ERROR')
+
+        nodeid = 'heatmeters'
+        name = 'heatmeter2-Boiler_Power'
+        if nodeid in inputs:
+            if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
+                updated_ago = time.time() - float(inputs[nodeid][name]['time'])
+                value = float(inputs[nodeid][name]['value'])
+                if updated_ago < 30:
+                    # Heat 0W (10s ago)
+                    drawText(0,14,'BOILER: %.0fW (%ds)' % (value, updated_ago),True)
+                else:
+                    drawText(0,14,'BOILER: ERROR',True)
+            else:
+                drawText(0,14,'BOILER: ERROR',True)
+        else:
+            drawText(0,14,'BOILER: ERROR',True)
         return
 
     # Now display the appropriate LCD page
