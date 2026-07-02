@@ -17,6 +17,7 @@ import itertools
 import threading
 import math
 import json
+import requests
 
 import redis
 import paho.mqtt.client as mqtt
@@ -38,6 +39,11 @@ version = '5'
 
 config = configparser.ConfigParser()
 config.read(path + '/emonPiLCD.cfg')  # FIXME should live in /etc, not /usr/share/emonPiLCD
+
+# ------------------------------------------------------------------------------------
+# Emoncms.org Status
+# ------------------------------------------------------------------------------------
+url = 'https://emoncms.org'
 
 # ------------------------------------------------------------------------------------
 # MQTT Settings
@@ -99,14 +105,12 @@ page = default_page
 pages = [
     "emonHP Data",
     "BoilerGrid Data",
+    "Watermeter Emoncms Data",
     "Ethernet",
     "WiFi",
     "WiFi AP",
     "WiFi AP Toggle",
-    "SSH",
-    "Shutdown",
-    "System Info",
-    "Uptime"
+    "Shutdown"
 ]
 
 screensaver = False
@@ -122,13 +126,6 @@ wifiAP_confirm = False
 # ------------------------------------------------------------------------------------
 uselogfile = config.get('general', 'uselogfile')
 logger = logging.getLogger("emonPiLCD")
-
-#ssh enable/disable/check commands
-ssh_enable = "sudo systemctl enable ssh > /dev/null"
-ssh_start = "sudo systemctl start ssh > /dev/null"
-ssh_disable = "sudo systemctl disable ssh > /dev/null"
-ssh_stop = "sudo systemctl stop ssh > /dev/null"
-ssh_status = "sudo systemctl status ssh > /dev/null"
 
 wifiAP_start = "sudo /opt/emoncms/modules/network/scripts/startAP.sh > /dev/null"
 wifiAP_stop = "sudo /opt/emoncms/modules/network/scripts/stopAP.sh > /dev/null"
@@ -169,26 +166,7 @@ def buttonPressLong():
     
     logger.info("Mode button LONG press")
 
-    if page == pages.index("SSH"):
-        ret = subprocess.call(ssh_status, shell=True)
-        if ret > 0:
-            drawText(0,0,'Enabling SSH',True)
-            #ssh not running, enable & start it
-            subprocess.call(ssh_enable, shell=True)
-            subprocess.call(ssh_start, shell=True)
-            logger.info("SSH Enabled")
-            drawText(0,0,'SSH Enabled')
-            drawText(0,14,'Change password!',True)
-        else:
-            drawText(0,0,'Disabling SSH',True)
-            #disable ssh
-            subprocess.call(ssh_disable, shell=True)
-            subprocess.call(ssh_stop, shell=True)
-            logger.info("SSH Disabled")
-            drawText(0,0,'SSH Disabled')
-            drawText(0,14,'',True)
-
-    elif page == pages.index("Shutdown"):
+    if page == pages.index("Shutdown"):
         logger.info("Shutting down")
         shutdown()
         
@@ -257,22 +235,6 @@ def updateLCD():
         if input_obj['nodeid'] not in inputs:
             inputs[input_obj['nodeid']] = {}
         inputs[input_obj['nodeid']][input_obj['name']] = input_last_timevalue
-    
-
-    if page == pages.index("System Info"):
-        drawText(0,0,sd_image_version)
-        drawText(0,14,"Serial: " + serial_num,True)
-        return
-
-    if page == pages.index("Uptime"):
-    # Get uptime
-        with open('/proc/uptime', 'r') as f:
-            seconds = float(f.readline().split()[0])
-        r.set('uptime', seconds)
-
-        drawText(0,0,datetime.now().strftime('%b %d %H:%M'))
-        drawText(0,14,'Uptime %.2f days' % (seconds / 86400),True)
-        return
 
     # Display Heatpump data
     if page == pages.index("emonHP Data"):
@@ -342,6 +304,40 @@ def updateLCD():
                 drawText(0,14,'BOILER: ERROR',True)
         else:
             drawText(0,14,'BOILER: ERROR',True)
+        return
+
+    # Display Watermeter and emoncms.org data 
+    if page == pages.index("Watermeter Emoncms Data"):
+        nodeid = 'heatmeters'
+        name = 'watermeter_Volume'
+        if nodeid in inputs:
+            if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
+                updated_ago = time.time() - float(inputs[nodeid][name]['time'])
+                value = float(inputs[nodeid][name]['value'])
+                if updated_ago < 30:
+                    # ELEC 0W (10s ago)
+                    drawText(0,0,'WATER: %.0fm3 (%ds)' % (value, updated_ago))
+                else:
+                    drawText(0,0,'WATER: ERROR')
+            else:
+                drawText(0,0,'WATER: ERROR')
+        else:
+            drawText(0,0,'WATER: ERROR')
+        try:
+            # 2. Perform a fast HEAD request (2-second timeout prevents LCD lag)
+            response = requests.head(url, allow_redirects=True, timeout=2)
+            
+            # 3. Check if the server responded with a successful 200 OK status
+            if response.status_code == 200:
+                # Displays: "EMONCMS: ONLINE"
+                drawText(0, 14, 'WEB: CONNECTED', True)
+            else:
+                # Displays the specific HTTP error code (e.g., 502, 404)
+                drawText(0, 14, 'WEB: DISCONNECTED', True)
+                
+        except requests.exceptions.RequestException:
+            # Catches timeouts, DNS failures, or loss of Wi-Fi/Ethernet
+            drawText(0, 14, 'WEB: DISCONNECTED', True)
         return
 
     # Now display the appropriate LCD page
@@ -421,18 +417,6 @@ def updateLCD():
         else: 
             drawText(0,0,"Enable WiFi AP?")
             
-        drawText(0,14,"Y press & hold",True)
-        return
-
-    if page == pages.index("SSH"):
-        ret = subprocess.call(ssh_status, shell=True)
-        if ret > 0:
-            #ssh not running
-            drawText(0,0,"SSH Enable?")
-        else:
-            #ssh not running
-            drawText(0,0,"SSH Disable?")
-
         drawText(0,14,"Y press & hold",True)
         return
 
@@ -673,7 +657,7 @@ def main():
                     
         if btn_state:
             press_time = math.floor(now - btn_press_timer)
-            if page == pages.index("WiFi AP Toggle") or page == pages.index("SSH") or page == pages.index("Shutdown"):
+            if page == pages.index("WiFi AP Toggle") or page == pages.index("Shutdown"):
                 if press_time>=1.0 and press_time<=5.0:
                     draw.rectangle((108, 15, 120, 25), outline=0, fill=0)
                     draw.text((110,14), str(press_time), font=font, fill=255)
