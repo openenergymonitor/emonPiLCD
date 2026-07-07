@@ -105,6 +105,7 @@ page = default_page
 pages = [
     "emonHP Data",
     "BoilerGrid Data",
+    "emonTH Data",
     "Watermeter Emoncms Data",
     "Ethernet",
     "WiFi",
@@ -132,6 +133,23 @@ wifiAP_stop = "sudo /opt/emoncms/modules/network/scripts/stopAP.sh > /dev/null"
 wifiAP_status = "ifconfig | grep 'inet 192.168.42.1'"
 
 oled_last = True
+
+def rssi_to_percentage(rssi: int) -> int:
+    """Converts RFM69 dBm RSSI reading to a 0-100% signal strength.
+    
+    Bounds used:
+      -40 dBm or better = 100%
+     -100 dBm or worse  = 0%
+    """
+    # Clamp bounds early
+    if rssi >= -40:
+        return 100
+    if rssi <= -100:
+        return 0
+        
+    # Map the linear range (-100 to -40) to (0 to 100)
+    percentage = int(((rssi + 100) / 60) * 100)
+    return percentage
 
 def drawClear():
     global draw
@@ -304,6 +322,41 @@ def updateLCD():
                 drawText(0,14,'BOILER: ERROR',True)
         else:
             drawText(0,14,'BOILER: ERROR',True)
+        return
+
+    # Display emonTH data 
+    if page == pages.index("emonTH Data"):
+        nodeid = 'emonth2_23'
+        name = 'temperature'
+        if nodeid in inputs:
+            if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
+                updated_ago = time.time() - float(inputs[nodeid][name]['time'])
+                value = float(inputs[nodeid][name]['value'])
+                if updated_ago < 30:
+                    # TEMPERATURE 0°C (10s ago)
+                    drawText(0,0,'INDOOR TEMP: %.0f°C (%ds)' % (value, updated_ago))
+                else:
+                    drawText(0,0,'INDOOR TEMP: ERROR')
+            else:
+                drawText(0,0,'INDOOR TEMP: ERROR')
+        else:
+            drawText(0,0,'INDOOR TEMP: ERROR')
+
+        nodeid = 'emonth2_23'
+        name = 'rssi'
+        if nodeid in inputs:
+            if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
+                updated_ago = time.time() - float(inputs[nodeid][name]['time'])
+                value = float(inputs[nodeid][name]['value'])
+                if updated_ago < 30:
+                    # RSSI 0dBm (10s ago)
+                    drawText(0, 14, 'RF SIGNAL: %d%% (%ds)' % (rssi_to_percentage(value), updated_ago), True)
+                else:
+                    drawText(0,14,'RF SIGNAL: NONE',True)
+            else:
+                drawText(0,14,'RF SIGNAL: NONE',True)
+        else:
+            drawText(0,14,'RF SIGNAL: NONE',True)
         return
 
     # Display Watermeter and emoncms.org data 
