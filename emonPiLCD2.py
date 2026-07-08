@@ -332,15 +332,15 @@ def updateLCD():
             if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
                 updated_ago = time.time() - float(inputs[nodeid][name]['time'])
                 value = float(inputs[nodeid][name]['value'])
-                if updated_ago < 30:
+                if updated_ago < 120:
                     # TEMPERATURE 0°C (10s ago)
-                    drawText(0,0,'INDOOR TEMP: %.0f°C (%ds)' % (value, updated_ago))
+                    drawText(0,0,'INDOOR: %.0f°C (%ds)' % (value, updated_ago))
                 else:
-                    drawText(0,0,'INDOOR TEMP: ERROR')
+                    drawText(0,0,'INDOOR: ERROR')
             else:
-                drawText(0,0,'INDOOR TEMP: ERROR')
+                drawText(0,0,'INDOOR: ERROR')
         else:
-            drawText(0,0,'INDOOR TEMP: ERROR')
+            drawText(0,0,'INDOOR: ERROR')
 
         nodeid = 'emonth2_23'
         name = 'rssi'
@@ -348,15 +348,15 @@ def updateLCD():
             if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
                 updated_ago = time.time() - float(inputs[nodeid][name]['time'])
                 value = float(inputs[nodeid][name]['value'])
-                if updated_ago < 30:
+                if updated_ago < 120:
                     # RSSI 0dBm (10s ago)
-                    drawText(0, 14, 'RF SIGNAL: %d%% (%ds)' % (rssi_to_percentage(value), updated_ago), True)
+                    drawText(0, 14, 'SIGNAL: %d%% (%ds)' % (rssi_to_percentage(value), updated_ago), True)
                 else:
-                    drawText(0,14,'RF SIGNAL: NONE',True)
+                    drawText(0,14,'SIGNAL: NONE',True)
             else:
-                drawText(0,14,'RF SIGNAL: NONE',True)
+                drawText(0,14,'SIGNAL: NONE',True)
         else:
-            drawText(0,14,'RF SIGNAL: NONE',True)
+            drawText(0,14,'SIGNAL: NONE',True)
         return
 
     # Display Watermeter and emoncms.org data 
