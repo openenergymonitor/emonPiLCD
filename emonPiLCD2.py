@@ -128,6 +128,13 @@ wifiAP_confirm = False
 uselogfile = config.get('general', 'uselogfile')
 logger = logging.getLogger("emonPiLCD")
 
+#ssh enable/disable/check commands
+ssh_enable = "sudo systemctl enable ssh > /dev/null"
+ssh_start = "sudo systemctl start ssh > /dev/null"
+ssh_disable = "sudo systemctl disable ssh > /dev/null"
+ssh_stop = "sudo systemctl stop ssh > /dev/null"
+ssh_status = "sudo systemctl status ssh > /dev/null"
+
 wifiAP_start = "sudo /opt/emoncms/modules/network/scripts/startAP.sh > /dev/null"
 wifiAP_stop = "sudo /opt/emoncms/modules/network/scripts/stopAP.sh > /dev/null"
 wifiAP_status = "ifconfig | grep 'inet 192.168.42.1'"
@@ -184,7 +191,26 @@ def buttonPressLong():
     
     logger.info("Mode button LONG press")
 
-    if page == pages.index("Shutdown"):
+    if page == pages.index("emonTH Data"):
+        ret = subprocess.call(ssh_status, shell=True)
+        if ret > 0:
+            drawText(0,0,'Enabling SSH',True)
+            #ssh not running, enable & start it
+            subprocess.call(ssh_enable, shell=True)
+            subprocess.call(ssh_start, shell=True)
+            logger.info("SSH Enabled")
+            drawText(0,0,'SSH Enabled')
+            drawText(0,14,'Change password!',True)
+        else:
+            drawText(0,0,'Disabling SSH',True)
+            #disable ssh
+            subprocess.call(ssh_disable, shell=True)
+            subprocess.call(ssh_stop, shell=True)
+            logger.info("SSH Disabled")
+            drawText(0,0,'SSH Disabled')
+            drawText(0,14,'',True)
+
+    elif page == pages.index("Shutdown"):
         logger.info("Shutting down")
         shutdown()
         
