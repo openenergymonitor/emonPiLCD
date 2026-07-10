@@ -488,7 +488,6 @@ def updateLCD():
         oled.show()
         return
 
-
     if page == pages.index("WiFi AP Toggle"):
         ret = subprocess.call(wifiAP_status, shell=True)       
         if ret == 0:
@@ -496,6 +495,18 @@ def updateLCD():
         else: 
             drawText(0,0,"Enable WiFi AP?")
             
+        drawText(0,14,"Y press & hold",True)
+        return
+
+    if page == pages.index("emonTH Data"):
+        ret = subprocess.call(ssh_status, shell=True)
+        if ret > 0:
+            #ssh not running
+            drawText(0,0,"SSH Enable?")
+        else:
+            #ssh not running
+            drawText(0,0,"SSH Disable?")
+
         drawText(0,14,"Y press & hold",True)
         return
 
@@ -736,7 +747,7 @@ def main():
                     
         if btn_state:
             press_time = math.floor(now - btn_press_timer)
-            if page == pages.index("WiFi AP Toggle") or page == pages.index("Shutdown"):
+            if page == pages.index("WiFi AP Toggle") or page == pages.index("emonTH Data") or page == pages.index("Shutdown"):
                 if press_time>=1.0 and press_time<=5.0:
                     draw.rectangle((108, 15, 120, 25), outline=0, fill=0)
                     draw.text((110,14), str(press_time), font=font, fill=255)
