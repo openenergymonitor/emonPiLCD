@@ -359,14 +359,14 @@ def updateLCD():
                 updated_ago = time.time() - float(inputs[nodeid][name]['time'])
                 value = float(inputs[nodeid][name]['value'])
                 if updated_ago < 120:
-                    # TEMPERATURE 0°C (10s ago)
-                    drawText(0,0,'INDOOR: %.0f°C (%ds)' % (value, updated_ago))
+                    # TEMPERATURE 0°C XXs ago)
+                    drawText(0,0,'INDOOR TEMP: %.0f°C' % (value))
                 else:
-                    drawText(0,0,'INDOOR: ERROR')
+                    drawText(0,0,'INDOOR TEMP: ERROR')
             else:
-                drawText(0,0,'INDOOR: ERROR')
+                drawText(0,0,'INDOOR TEMP: ERROR')
         else:
-            drawText(0,0,'INDOOR: ERROR')
+            drawText(0,0,'INDOOR TEMP: ERROR')
 
         nodeid = 'emonth2_23'
         name = 'rssi'
@@ -375,7 +375,7 @@ def updateLCD():
                 updated_ago = time.time() - float(inputs[nodeid][name]['time'])
                 value = float(inputs[nodeid][name]['value'])
                 if updated_ago < 120:
-                    # RSSI 0dBm (10s ago)
+                    # RSSI 0dBm (XXs ago)
                     drawText(0, 14, 'SIGNAL: %d%% (%ds)' % (rssi_to_percentage(value), updated_ago), True)
                 else:
                     drawText(0,14,'SIGNAL: NONE',True)
