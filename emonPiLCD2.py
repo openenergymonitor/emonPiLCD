@@ -282,8 +282,8 @@ def updateLCD():
 
     # Display Heatpump data
     if page == pages.index("emonHP Data"):
-        nodeid = 'heatpump'
-        name = 'electric_Power'
+        nodeid = 'modbus'
+        name = 'ashp_Power'
         if nodeid in inputs:
             if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
                 updated_ago = time.time() - float(inputs[nodeid][name]['time'])
@@ -298,7 +298,7 @@ def updateLCD():
         else:
             drawText(0,0,'ELEC HP: ERROR')
 
-        nodeid = 'heatmeters'
+        nodeid = 'mbus'
         name = 'heatmeter_Power'
         if nodeid in inputs:
             if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
@@ -317,8 +317,8 @@ def updateLCD():
 
     # Display Boiler + Grid data
     if page == pages.index("BoilerGrid Data"):
-        nodeid = 'grid'
-        name = 'electric_Power'
+        nodeid = 'modbus'
+        name = 'grid_Power'
         if nodeid in inputs:
             if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
                 updated_ago = time.time() - float(inputs[nodeid][name]['time'])
@@ -333,7 +333,7 @@ def updateLCD():
         else:
             drawText(0,0,'GRID: ERROR')
 
-        nodeid = 'heatmeters'
+        nodeid = 'mbus'
         name = 'heatmeter2-Boiler_Power'
         if nodeid in inputs:
             if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
@@ -387,7 +387,7 @@ def updateLCD():
 
     # Display Watermeter and emoncms.org data 
     if page == pages.index("Watermeter Emoncms Data"):
-        nodeid = 'heatmeters'
+        nodeid = 'mbus'
         name = 'watermeter_Volume'
         if nodeid in inputs:
             if name in inputs[nodeid] and 'value' in inputs[nodeid][name]:
